@@ -65,7 +65,6 @@ public class InCallPresenter implements CallList.Listener {
     private Context mContext;
     private CallList mCallList;
     private InCallActivity mInCallActivity;
-    private InCallCardActivity mInCallCardActivity;
     private InCallState mInCallState = InCallState.NO_CALLS;
     private AccelerometerListener mAccelerometerListener;
     private ProximitySensor mProximitySensor;
@@ -182,12 +181,6 @@ public class InCallPresenter implements CallList.Listener {
     }
 
     private void attemptFinishActivity() {
-        // Finish our presenter card in all cases, we won't need it anymore whatever might
-        // happen.
-        if (mInCallCardActivity != null) {
-            mInCallCardActivity.finish();
-        }
-
         final boolean doFinish = (mInCallActivity != null && isActivityStarted());
         Log.i(this, "Hide in call UI: " + doFinish);
 
@@ -201,10 +194,6 @@ public class InCallPresenter implements CallList.Listener {
         if (doFinish) {
             mInCallActivity.finish();
         }
-    }
-
-    public void setCardActivity(InCallCardActivity inCallCardActivity) {
-        mInCallCardActivity = inCallCardActivity;
     }
 
     /**
@@ -872,16 +861,8 @@ public class InCallPresenter implements CallList.Listener {
                     Settings.System.CALL_UI_AS_HEADS_UP, 1) == 1;
         }
 
-        final PowerManager pm = (PowerManager) mContext.getSystemService(Context.POWER_SERVICE);
-        // If the screen is on, we'll prefer to not interrupt the user too much and slide in a card
-        if (pm.isScreenOn()) {
-            Intent intent = new Intent(mContext, InCallCardActivity.class);
-            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-            mContext.startActivity(intent);
-        } else {
-            mStatusBarNotifier.updateNotificationAndLaunchIncomingCallUi(
-                    inCallState, mCallList, mCallUiInBackground, isHeadsUp);
-        }
+        mStatusBarNotifier.updateNotificationAndLaunchIncomingCallUi(
+                inCallState, mCallList, mCallUiInBackground, isHeadsUp);
     }
 
     /**
@@ -894,14 +875,6 @@ public class InCallPresenter implements CallList.Listener {
         mStatusBarNotifier.cancelInCall();
         mStatusBarNotifier.updateNotificationAndLaunchIncomingCallUi(
                 InCallState.INCALL, mCallList, false, false);
-    }
-
-    /**
-     * Starts the incoming call Ui immediately, bypassing the card UI
-     */
-    public void startIncomingCallUi(InCallState inCallState) {
-        mStatusBarNotifier.updateNotificationAndLaunchIncomingCallUi(
-                inCallState, mCallList, mCallUiInBackground, false);
     }
 
     /**
